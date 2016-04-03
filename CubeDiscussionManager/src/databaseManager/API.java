@@ -25,7 +25,7 @@ import dataModel.Cube;
 public class API {
 	private static final String BASE_URL = "http://www.bhswriter.com/api/";
 
-	public Cube getCube(int cubeID) {
+	public Cube.State getCube(int cubeID) {
 		String page = getWebsight(BASE_URL + "cube/" + cubeID);
 		JSONTokener parser = new JSONTokener(page);
 		try {
@@ -37,7 +37,7 @@ public class API {
 			int cubeState = json.getInt("cubeState");
 			String timeStamp = json.getString("timeStamp");
 			String cubeStateID = json.getString("myvalue");
-			return new Cube(cubeNumber, Cube.State.fromNumber(cubeState),
+			return new Cube.State(Cube.Face.fromNumber(cubeState),
 					timeStamp, cubeStateID);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -50,19 +50,19 @@ public class API {
 			String page = downloadUrl(BASE_URL + "cubes", "GET");
 			JSONTokener parser = new JSONTokener(page);
 			JSONObject base_json = (JSONObject) parser.nextValue();
-			System.out.println("base_json = " + base_json);
+			//System.out.println("base_json = " + base_json);
 			List<Cube> cubes = new ArrayList<>();
 			for (String key : base_json.keySet()) {
 				try {
 					JSONObject json = (JSONObject) base_json.get(key);
-					System.out.println("json = " + json);
+					//System.out.println("json = " + json);
 					// {"cubeID":2.0,"cubeState":1,"timeStamp":"March, 31 2016 23:59:30","cubeStateID":"myvalue"}
 					int cubeState = json.getInt("cubeState");
 					String timeStamp = json.getString("timeStamp");
 					int cubeStateID = json.getInt("cubeStateID");
-					cubes.add(new Cube(Integer.parseInt(key), Cube.State
-							.fromNumber(cubeState), timeStamp, Integer
-							.toString(cubeStateID)));
+					Cube c = new Cube(Integer.parseInt(key));
+					c.addState(new Cube.State(Cube.Face.fromNumber(cubeState), timeStamp, Integer.toString(cubeStateID)));
+					cubes.add(c);
 				} catch (Exception e) {
 					e.printStackTrace();
 					break;
@@ -76,12 +76,12 @@ public class API {
 		}
 	}
 
-	public List<Cube> getCubeHistory(int cubeID, int steps) {
+	public List<Cube.State> getCubeHistory(int cubeID, int steps) {
 		String page = getWebsight(BASE_URL + "cube/history/" + cubeID + "/"
 				+ steps);
 		JSONTokener parser = new JSONTokener(page);
 		JSONObject json = (JSONObject) parser.nextValue();
-		List<Cube> cubes = new ArrayList<>();
+		List<Cube.State> cubes = new ArrayList<>();
 		try {
 			for (int i = 1; i <= steps; i++) {
 				JSONObject cube_json = json.getJSONObject(Integer.toString(i));
@@ -90,8 +90,7 @@ public class API {
 				int cubeState = cube_json.getInt("cubeState");
 				String timeStamp = cube_json.getString("timeStamp");
 				String cubeStateID = cube_json.getString("myvalue");
-				cubes.add(new Cube(cubeNumber,
-						Cube.State.fromNumber(cubeState), timeStamp,
+				cubes.add(new Cube.State(Cube.Face.fromNumber(cubeState), timeStamp,
 						cubeStateID));
 			}
 		} catch (Exception e) {
